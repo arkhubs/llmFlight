@@ -1,9 +1,22 @@
-# %%
+'''
+Copyright 2024 Zhixuan Hu
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+'''
+
 import torch, sys, os, cpuinfo
 sys.path.append(os.path.join(os.getcwd(), '../../'))
 from embedding_models.text_embedding_3_small import get_embeddings
-
-# %%
 import torch.nn as nn       # 用于继承的模型都在这里
 import torch.nn.functional as F     # 常用的激活函数、损失函数等
 
@@ -26,7 +39,6 @@ class LiHuNet(nn.Module):
         return output
 
 
-# %%
 class Model():
     def __init__(self, pth, device):
         model = LiHuNet()
@@ -39,7 +51,6 @@ class Model():
         return self.model.forward(torch.cat((torch.tensor(question), torch.tensor(answer)), dim=0).view(1, -1), device=self.device).item()
 
 
-# %%
 def supported_devices():
     devices = {}
 
