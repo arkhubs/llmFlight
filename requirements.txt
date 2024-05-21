@@ -1,0 +1,7 @@
+pytorch
+torchsummary
+py-cpuinfo
+openai
+matplotlib
+numpy
+pandas
