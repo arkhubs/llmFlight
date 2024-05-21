@@ -2,10 +2,10 @@
 
 !['WebUI'](webui.png)
 
-**For full datasets please visit https://huggingface.co/datasets/xuanfl/Flight-QA-v1/ .**  
-**完整数据集请参见 https://huggingface.co/datasets/xuanfl/Flight-QA-v1/ 。**  
+**For all datasets please visit https://huggingface.co/datasets/xuanfl/datasets-for-llmFlight/tree/main .**  
+**更多数据集请参见 https://huggingface.co/datasets/xuanfl/datasets-for-llmFlight/tree/main 。**  
 
-**For All model and its params please visit https://huggingface.co/xuanfl/llmFlight/tree/main and you can also upload your model or params there. Thank you for your support.**  
+**For all model and its params please visit https://huggingface.co/xuanfl/llmFlight/tree/main and you can also upload your model or params there. Thank you for your support.**  
 **如需下载更多模型及其参数，请访问 https://huggingface.co/xuanfl/llmFlight/tree/main ，您也可以在那里上传您开发、训练的模型或参数。感谢您的支持。**  
 
 &ensp;&ensp; This is the code implementation of the Interpretable Language Style Recognition Framework developed by our team, with great compatibility and extensibility, comes with a WebUI, and supports custom plug-ins, similar to Stable Diffusion. It can realize sub-segment prediction and full-text prediction, and also give multi-dimensional prediction probabilities from different perspectives (e.g. word usage, sentence style, emotional trend, emotional polarity, etc.), combined with Agent modeling, semi-automatic and interactive decision-making. We have currently implemented ChatGPT Gnerated Text Detection(Acurracy 99%) and Luxin Text Detection. To realize more interesting applications, you just need to use your own dataset to train directly, the model compatibility is very strong; of course, you can also develop your own model, put it into the corresponding directory, the WebUI can automatically detect and for you to choose.
