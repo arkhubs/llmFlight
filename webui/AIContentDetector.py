@@ -21,6 +21,7 @@ import sys, os, re, math, importlib
 from string import Template
 os.chdir(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.getcwd(), '../'))
+from settings import *
 supported_models = [model for model in os.listdir('../models') if os.path.isdir(os.path.join('../models', model))]
 
 ## 加载模型，导入模型对应的inference模块
@@ -89,13 +90,13 @@ def new_session():
             'name': st.session_state['new-text'],  # 会话名称
             "tab_count": 2,                        # tab数量
             'data': [{                             # 各个tab的保存信息
-                    "model_index": 0,        # 选过的模型id
-                    "device_index": 0,       # 选过的设备id
-                    "pth_index": 0,          # 选过的参数id
+                    "model_index": DEFAULT_MODEL_INDEX,        # 选过的模型id
+                    "device_index": DEFAULT_DEVICE_INDEX,       # 选过的设备id
+                    "pth_index": DEFAULT_PTH_INDEX,          # 选过的参数id
                 }, {
-                    "model_index": 0,
-                    "device_index": 0,
-                    "pth_index": 0,
+                    "model_index": DEFAULT_MODEL_INDEX,
+                    "device_index": DEFAULT_DEVICE_INDEX,
+                    "pth_index": DEFAULT_PTH_INDEX,
                 },
             ]
         })
@@ -195,13 +196,16 @@ if st.session_state.current:
         with tab:
             # 选择模型、设备、参数
             data = session['data'][tabid]
-            model_name = st.selectbox(label="model", key=f'select-model-{id}-{tabid}', options=supported_models, index=data['model_index'])
+            num_options = len(supported_models)
+            model_name = st.selectbox(label="model", key=f'select-model-{id}-{tabid}', options=supported_models, index=(num_options+data['model_index']) % num_options)
             data['model_index'] = supported_models.index(model_name)
             pths, inference = init_model(model_name)
             supported_devices = st.cache_resource(inference.supported_devices)()
-            device = st.selectbox(label="device", key=f'select-device-{id}-{tabid}', options=list(supported_devices.keys()), index=data['device_index'])
+            num_options = len(supported_devices)
+            device = st.selectbox(label="device", key=f'select-device-{id}-{tabid}', options=list(supported_devices.keys()), index=(num_options+data['device_index']) % num_options)
             data['device_index'] = list(supported_devices.keys()).index(device)
-            pth = st.selectbox(label="model params", key=f'select-params-{id}-{tabid}', options=pths, index=data['pth_index'])
+            num_options = len(pths)
+            pth = st.selectbox(label="model params", key=f'select-params-{id}-{tabid}', options=pths, index=(num_options+data['pth_index']) % num_options)
             data['pth_index'] = pths.index(pth)
             model = inference.Model(os.path.join("../models", model_name, "pths", pth), supported_devices[device])
             # 输入文本
