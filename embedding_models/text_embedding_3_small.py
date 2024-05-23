@@ -7,7 +7,7 @@ import API_KEYS
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 model = 'text-embedding-3-small'
-client = OpenAI(**API_KEYS.get_api_key(model))
+client = OpenAI(**(API_KEYS.get_api_key(model)))
 
 def get_embeddings(texts: list):
     """

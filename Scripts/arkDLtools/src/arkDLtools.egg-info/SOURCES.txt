@@ -1,0 +1,13 @@
+LICENSE
+MANIFEST.in
+NOTICE
+README.md
+example.png
+pyproject.toml
+src/arkDLtools/__init__.py
+src/arkDLtools/dltools.py
+src/arkDLtools.egg-info/PKG-INFO
+src/arkDLtools.egg-info/SOURCES.txt
+src/arkDLtools.egg-info/dependency_links.txt
+src/arkDLtools.egg-info/requires.txt
+src/arkDLtools.egg-info/top_level.txt

@@ -1,0 +1,23 @@
+[project]
+name = "arkDLtools"
+version = "0.24.5.0"
+authors = [
+  { name = "arkhubs", email = "1459826385@qq.com" },
+]
+dependencies = ['pandas', 'matplotlib']
+description = "A toolkit for use with pytorch. Self-contained imperative programming, highly customizable, comes with its own instruction controller oriented to complex processes (partly multithreaded parallel, partly sequential serial, and able to be nested). Has built-in features to instantly visualize the training process (highly customizable), generate logs, auto-save, pause and resume training, automatic device selection, etc., and thanks to the use of multi-threading, it has no impact on the training speed at all. \n 一个搭配pytorch使用的工具箱。自带指令式编程，高度自定义，自带面向复杂流程（部分多线程并行，部分按顺序串行，且能嵌套）的指令控制器。具有即时性地可视化训练过程（高度自定义）、生成日志、自动保存、暂停和接续训练、自动选择device等内建功能，且得益于多线程的使用，它对训练速度完全无影响。  "
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+"Homepage" = "https://github.com/arkhubs/llmFlight/tree/main/Scripts/arkDLtools"
+"Bug Tracker" = "https://github.com/arkhubs/llmFlight/issues"

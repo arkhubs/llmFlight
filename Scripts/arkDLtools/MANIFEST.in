@@ -1,0 +1,11 @@
+include src/*
+include pyproject.toml
+include MANIFEST.in
+include README.md
+include example.png
+include LICENSE
+include NOTICE
+
+
+
+exclude nothing

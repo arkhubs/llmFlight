@@ -14,11 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 '''
 
-## version 0.24.5.0
-## 0.24.5.0 update loc 2 -> 4
+## version 0.24.5.2
+## 0.24.5.0 update plots loc 2 -> 4
+## 0.24.5.2 update torch, ipython -> try import
 
-import torch
-import IPython.display as display                   # 用于控制notebook的输出流
+try:
+    import torch
+    import IPython.display as display                   # 用于控制notebook的输出流
+except Exception:
+    pass
+
 import io, os, re, glob, time, json                 # 一些io库
 import collections, types, traceback
 import pandas as pd
