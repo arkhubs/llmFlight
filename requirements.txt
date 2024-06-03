@@ -1,4 +1,6 @@
-pytorch
+streamlit
+streamlit-modal
+lion-pytorch
 torchsummary
 py-cpuinfo
 openai

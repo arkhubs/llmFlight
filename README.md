@@ -1,5 +1,8 @@
 # llmFlight with WebUI
 
+**As a user, download the zip from Realease, unzip it to the specified directory, then run `install-windows-x64.bat` (under Windows x64) or `install-linux-x64.sh` (under Linux x64). Every time you start it later, just run `launch-webui-windows.bat` or `launch-webui-linux.sh`.**  
+**从Realease中下载压缩包，解压到指定目录，然后运行`install-windows-x64.bat`(Windows x64下)或`install-linux-x64.sh`(Linux x64下)即可使用。以后每次启动，只需运行`launch-webui-windows.bat`或`launch-webui-linux.sh`。**
+
 !['WebUI'](webui.png)
 
 **For all datasets please visit https://huggingface.co/datasets/xuanfl/datasets-for-llmFlight/tree/main .**  
