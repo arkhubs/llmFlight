@@ -22,13 +22,19 @@ from string import Template
 os.chdir(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.getcwd(), '../'))
 from settings import *
-supported_models = [model for model in os.listdir('../models') if os.path.isdir(os.path.join('../models', model))]
+from llm_models.gpt_3_5_turbo_0125 import get_chat_response
+supported_models = [model for model in os.listdir('../main_models') if os.path.isdir(os.path.join('../main_models', model))]
+specialized_models = [(model_name, importlib.import_module(f"specialized_models.{model_name}.inference").Model()) for model_name in [
+    'emotion_Dou',
+    'sentences_length',
+    'words_richness'
+]]
 
 ## 加载模型，导入模型对应的inference模块
 @st.cache_resource
-def init_model(model_name):
-    pths = os.listdir(os.path.join('../models', model_name, 'pths'))
-    inference = importlib.import_module(f"models.{model_name}.inference")
+def init_main_model(model_name):
+    pths = os.listdir(os.path.join('../main_models', model_name, 'pths'))
+    inference = importlib.import_module(f"main_models.{model_name}.inference")
     return pths, inference
 
 ## 规范字符串到边栏会话按钮要求
@@ -42,12 +48,28 @@ def adj_str(input_str, length=18, padding_char='\u3000'):
 
 ## 分割文本为语段
 @st.cache_data
-def split_text_into_segments(text, reg=r'[\n]'):
+def split_text_into_segments(text, tol=200, reg=r'[\n]'):
     # 使用正则表达式分割文本，分隔符为句号、问号或感叹号
     segments = re.split(reg, text)
     # 过滤掉空字符串，并在每个段落后加上原来的结束符号
     segments = [seg.strip() for seg in segments if seg.strip() != '']
-    return segments
+     # 合并长度小于 tol 的语段
+    merged_segments = []
+    current_segment = ''
+    
+    for seg in segments:
+        if len(current_segment) + len(seg) + 1 <= tol:
+            current_segment += (' ' + seg if current_segment else seg)
+        else:
+            if current_segment:
+                merged_segments.append(current_segment)
+            current_segment = seg
+
+    if current_segment:
+        merged_segments.append(current_segment)
+    
+    return merged_segments
+
 
 ## 删除会话
 def delete_session(id):
@@ -115,26 +137,58 @@ def save_answer_text(data, key):
 
 class Reporter():
     def __init__(self):
-        self.local_templates = {'default': Template("""
-            <div style="background-color: ${color}; padding: 10px; margin: 10px 0;">
-                <strong>段落预测概率: ${prob}%</strong>
-                <p>${text}</p>
-            </div>
-        """)}
+        self.local_templates = {
+            'default': Template("""
+                <div style="background-color: ${color}; padding: 10px; margin: 10px 0;">
+                    <strong>${num}. 段落预测概率: ${prob}%</strong>
+                    <p>${text}</p>
+                </div>
+            """)}
+        
+        self.prompt_templates = {
+            'default': Template("""
+                ${num}. 段落预测概率: ${prob}%
+            """)}
+        
+        self.global_templates = {
+            'default': Template("""
+                ### 主模型综合预测概率  
+                    ${main}；
+                ### 特化模型预测概率：  
+                - 词语丰富度模型：
+                    ${words_richness}；
+                - 句子长度模型：
+                    ${sentences_length}；
+                - 情感强度模型：
+                    ${emotion_Dou}；                
+            """)}
 
     # 根据概率计算颜色的深度
     def color_gradient(self, prob):
         intensity = 255 - int(math.floor(155 * prob))  # 保证至少是100，所以颜色不会太深
         return f"rgb(255, {intensity}, {intensity})"  # 红色渐变
     
-    # 生成报告
-    def local_render(self, local, segment, probs):
-        local_template = self.local_templates[local]
+    # 生成分段预测报告
+    def local_render(self, template, segment, probs):
+        local_template = self.local_templates[template]
         ans_seg = [
-            local_template.substitute(text=text, prob=f"{prob*100:.1f}", color=self.color_gradient(prob))
-            for text, prob in list(zip(segment, probs))
+            local_template.substitute(text=text, prob=f"{prob*100:.1f}", color=self.color_gradient(prob), num=num)
+            for num, (text, prob) in enumerate(zip(segment, probs), start=1)
         ]
         return "\n".join(ans_seg)
+    
+    def local_prompt(self, template, probs):
+        template = self.prompt_templates[template]
+        ans = [
+            template.substitute(prob=f"{prob*100:.1f}", num=num)
+            for num, prob in enumerate(probs, start=1)
+        ]
+        return "\n".join(ans)
+
+    # 生成总体预测报告
+    def global_render(self, template, probs):
+        global_template = self.global_templates[template]
+        return global_template.substitute(**probs)
     
 
 
@@ -199,7 +253,7 @@ if st.session_state.current:
             num_options = len(supported_models)
             model_name = st.selectbox(label="model", key=f'select-model-{id}-{tabid}', options=supported_models, index=(num_options+data['model_index']) % num_options)
             data['model_index'] = supported_models.index(model_name)
-            pths, inference = init_model(model_name)
+            pths, inference = init_main_model(model_name)
             supported_devices = st.cache_resource(inference.supported_devices)()
             num_options = len(supported_devices)
             device = st.selectbox(label="device", key=f'select-device-{id}-{tabid}', options=list(supported_devices.keys()), index=(num_options+data['device_index']) % num_options)
@@ -207,7 +261,7 @@ if st.session_state.current:
             num_options = len(pths)
             pth = st.selectbox(label="model params", key=f'select-params-{id}-{tabid}', options=pths, index=(num_options+data['pth_index']) % num_options)
             data['pth_index'] = pths.index(pth)
-            model = inference.Model(os.path.join("../models", model_name, "pths", pth), supported_devices[device])
+            model = inference.Model(os.path.join("../main_models", model_name, "pths", pth), supported_devices[device])
             # 输入文本
             question_text = st.text_area(label="question", value=data.get('question_text', ""), height=100, key=f"question-input-{id}-{tabid}", 
                                          on_change=save_question_text, args=(data, f"question-input-{id}-{tabid}"))
@@ -221,8 +275,26 @@ if st.session_state.current:
                 answer_seg = [answer_text] + split_text_into_segments(answer_text)
                 answer_embeddings = inference.get_embeddings(answer_seg)
                 probs = [model.infer(question_embedding, answer_embedding) for answer_embedding in answer_embeddings]
+                specialized_probs = {**{'main': f"{probs[0]*100:.1f}%"}, **{model_name: f"{model.infer(answer_text)[0]*100:.1f}%" for model_name, model in specialized_models}}
+
+                global_info = reporter.global_render('default', specialized_probs)
+                st.markdown(global_info)
+                st.markdown("### Agent总结：")
+                prompt = """
+以下是AI文本检测报告，但不够直观，请帮我汇总一个简洁的结论出来。如果综合概率高，请进行归因。以这样的格式：
+【简洁结论】\n
+……\n
+【具体分析】\n
+词语丰富度模型预测文本为AI生成的概率……，表明……
+句子长度模型和情感强度模型的预测概率分别为…………
+分段预测中，……的预测概率较高，分别为……，提示……\n
+综合来看，……
+                """ + global_info + reporter.local_prompt('default', probs[1:])
+                st.write(get_chat_response(prompt)[0])
+                x = st.markdown("### 分段预测概率：")
+                print(x)
                 st.html(reporter.local_render('default', answer_seg[1:], probs[1:]))
-                st.write(probs[0], "inferenced by", device)
+                
 
 
 
