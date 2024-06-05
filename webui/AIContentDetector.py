@@ -19,6 +19,8 @@ from streamlit_modal import Modal
 
 import sys, os, re, math, importlib
 from string import Template
+import jieba.analyse
+
 os.chdir(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.getcwd(), '../'))
 from settings import *
@@ -70,6 +72,32 @@ def split_text_into_segments(text, tol=200, reg=r'[\n]'):
     
     return merged_segments
 
+## 补全问题文本
+def generate_question(text, num_topics):
+
+    stopwords = {
+        '的', '了', '和', '是', '在', '也', '有', '就', '不', '都', '而', '及', '与', '或', '一个', '中', '这', '以及', '一个',
+        '我', '你', '他', '她', '它', '我们', '你们', '他们', '她们', '它们', '其', '将', '要', '已经', '还', '还要', '再',
+        '没有', '不是', '非常', '特别', '很', '特别', '太', '然后', '但是', '所以', '如果', '因为', '因为而', '所以才', '由于', '因此', 
+        '就', '而且', '然而', '并且', '就是', '即', '又', '这', '那', '这些', '那些', '时候', '当时', '已', '我', '你', '他',
+        '她', '它', '的', '一个', '和', '而且', '并', '与', '来', '在', '到', '也', '有', '自己', '我们', '你们', '他们',
+        '她们', '它们', '该', '以及', '但', '并', '又', '同', '接着', '等', '可是', '而', '于是', '而是', '并且', '以及', 
+        '还', '还是', '仍然', '还是', '甚至', '的', '了', '就', '都', '而', '和', '不', '这', '也', '一', '来', '就', '不',
+        '中', '为', '在', '可', '却', '与', '于', '他', '她', '它', '能', '所', '个', '人', '这', '那', '也', '而', '但', 
+        '把', '却', '我', '你', '他', '她', '它', '我们', '你们', '他们', '她们', '它们', '这', '那', '这些', '那些'
+    }
+
+    kw = jieba.analyse.extract_tags(text, topK=num_topics)
+
+    # # 获取文章开头的2-4句话
+    # sentences = split_sentences(text)
+    # start_sentences = ' '.join(sentences[:random.randint(2, 4)])
+
+    # 构建新的问题文本
+    # new_question = f"请根据关键词{kw}和以{start_sentences}为开头的进行写作。"
+    new_question = f"请根据关键词{kw}进行写作。"
+
+    return new_question
 
 ## 删除会话
 def delete_session(id):
@@ -262,6 +290,7 @@ if st.session_state.current:
             pth = st.selectbox(label="model params", key=f'select-params-{id}-{tabid}', options=pths, index=(num_options+data['pth_index']) % num_options)
             data['pth_index'] = pths.index(pth)
             model = inference.Model(os.path.join("../main_models", model_name, "pths", pth), supported_devices[device])
+
             # 输入文本
             question_text = st.text_area(label="question", value=data.get('question_text', ""), height=100, key=f"question-input-{id}-{tabid}", 
                                          on_change=save_question_text, args=(data, f"question-input-{id}-{tabid}"))
@@ -269,8 +298,16 @@ if st.session_state.current:
             answer_text = st.text_area(label="answer", value=data.get('answer_text', ""), height=500, key=f"answer-input-{id}-{tabid}",
                                        on_change=save_answer_text, args=(data, f"answer-input-{id}-{tabid}"))
             st.write(f"The text has about `{sum(2 if ord(char) > 127 else 1 for char in answer_text)}` tokens.")
+
+            cc1, cc2 = st.columns(spec=[1, 9])
+            # 补全问题文本
+            if cc1.button("生成问题", key=f"generate-question-{id}-{tabid}"):
+                question_text = generate_question(answer_text, 10)
+                st.markdown(f"`{question_text}`")
+                data['question_text'] = question_text
+
             # 预测
-            if st.button("检测", key=f"infer-{id}-{tabid}"):
+            if cc2.button("检测", key=f"infer-{id}-{tabid}"):
                 question_embedding = inference.get_embeddings([question_text])[0]
                 answer_seg = [answer_text] + split_text_into_segments(answer_text)
                 answer_embeddings = inference.get_embeddings(answer_seg)
@@ -281,18 +318,17 @@ if st.session_state.current:
                 st.markdown(global_info)
                 st.markdown("### Agent总结：")
                 prompt = """
-以下是AI文本检测报告，但不够直观，请帮我汇总一个简洁的结论出来。如果综合概率高，请进行归因。以这样的格式：
-【简洁结论】\n
-……\n
-【具体分析】\n
-词语丰富度模型预测文本为AI生成的概率……，表明……
-句子长度模型和情感强度模型的预测概率分别为…………
-分段预测中，……的预测概率较高，分别为……，提示……\n
-综合来看，……
+                    以下是AI文本检测报告，但不够直观，请帮我汇总一个简洁的结论出来。如果综合概率高，请进行归因。以这样的格式：
+                    【简洁结论】\n
+                    ……\n
+                    【具体分析】\n
+                    词语丰富度模型预测文本为AI生成的概率……，表明……
+                    句子长度模型和情感强度模型的预测概率分别为…………
+                    分段预测中，……的预测概率较高，分别为……，提示……\n
+                    综合来看，……
                 """ + global_info + reporter.local_prompt('default', probs[1:])
                 st.write(get_chat_response(prompt)[0])
-                x = st.markdown("### 分段预测概率：")
-                print(x)
+                st.markdown("### 分段预测概率：")
                 st.html(reporter.local_render('default', answer_seg[1:], probs[1:]))
                 
 
