@@ -144,6 +144,7 @@ import site
         return
 
     subprocess.run([os.path.join(script_dir, "Scripts", "python310", "python"), "-m", "pip", "install", "-r", os.path.join(script_dir, "requirements.txt"), "--no-warn-script-location"])
+    subprocess.run([os.path.join(script_dir, "Scripts", "python310", "python"), "-m", "ipykernel", "install", "--user", "--name=lf"  ])
 
     print(messages["install_success"])
     launch_choice = input(messages["start_now"])

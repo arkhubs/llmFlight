@@ -299,15 +299,14 @@ if st.session_state.current:
                                        on_change=save_answer_text, args=(data, f"answer-input-{id}-{tabid}"))
             st.write(f"The text has about `{sum(2 if ord(char) > 127 else 1 for char in answer_text)}` tokens.")
 
-            cc1, cc2 = st.columns(spec=[1, 9])
             # 补全问题文本
-            if cc1.button("生成问题", key=f"generate-question-{id}-{tabid}"):
+            if st.button("不能提供问题文本？点击为你生成一个问题！", key=f"generate-question-{id}-{tabid}"):
                 question_text = generate_question(answer_text, 10)
                 st.markdown(f"`{question_text}`")
                 data['question_text'] = question_text
 
             # 预测
-            if cc2.button("检测", key=f"infer-{id}-{tabid}"):
+            if st.button("检测！", key=f"infer-{id}-{tabid}"):
                 question_embedding = inference.get_embeddings([question_text])[0]
                 answer_seg = [answer_text] + split_text_into_segments(answer_text)
                 answer_embeddings = inference.get_embeddings(answer_seg)
@@ -318,13 +317,13 @@ if st.session_state.current:
                 st.markdown(global_info)
                 st.markdown("### Agent总结：")
                 prompt = """
-                    以下是AI文本检测报告，但不够直观，请帮我汇总一个简洁的结论出来。如果综合概率高，请进行归因。以这样的格式：
+                    以下是AI文本检测报告，但不够直观，请分别帮我汇总一个简洁的结论和一个具体分析。以综合概率为主，如果综合概率低，要点出不太可能由AI生成；如果综合概率高，请进行归因。以这样的格式：
                     【简洁结论】\n
                     ……\n
                     【具体分析】\n
                     词语丰富度模型预测文本为AI生成的概率……，表明……
                     句子长度模型和情感强度模型的预测概率分别为…………
-                    分段预测中，……的预测概率较高，分别为……，提示……\n
+                    分段预测中，……的预测概率……，分别为……，提示……\n
                     综合来看，……
                 """ + global_info + reporter.local_prompt('default', probs[1:])
                 st.write(get_chat_response(prompt)[0])
