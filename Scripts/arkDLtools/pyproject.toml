@@ -1,6 +1,6 @@
 [project]
 name = "arkDLtools"
-version = "0.24.5.0"
+version = "0.24.7.8"
 authors = [
   { name = "arkhubs", email = "1459826385@qq.com" },
 ]

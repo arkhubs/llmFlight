@@ -1,5 +1,5 @@
 # arkDLtools 
-## version 0.24.5.2
+## version 0.24.7.8
 
 ### Introduction
 A toolkit for use with pytorch. Self-contained imperative programming, highly customizable, comes with its own instruction controller oriented to complex processes (partly multithreaded parallel, partly sequential serial, and able to be nested). Has built-in features to instantly visualize the training process (highly customizable), generate logs, auto-save, pause and resume training, automatic device selection, etc., and thanks to the use of multi-threading, it has no impact on the training speed at all.  
@@ -309,7 +309,6 @@ def train(device, marker, controller, model, optimizer, Loss=F.cross_entropy, Me
     - fixed bug: Marker.continu 
         - self.df = self.df.loc[1:self.from_epoch, :] ->  
         - self.df = self.df.sort_index().loc[1:self.from_epoch, :]
-
 - 0.24.5.2 update torch, ipython -> try import
 - 0.24.5.0 update plots loc 2 -> 4
 - 0.24.4.3 initial
