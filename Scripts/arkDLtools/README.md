@@ -302,6 +302,14 @@ def train(device, marker, controller, model, optimizer, Loss=F.cross_entropy, Me
             controller.run([oprs])
 ```
 ### Update Logs （更新日志）
+- 0.24.7.8 
+    - fixed bug: Marker.continu   
+        - self.df = self.df.loc[1:self.      from_epoch+1, :] ->   
+    self.df = self.df.loc[1:self.from_epoch, :]  
+    - fixed bug: Marker.continu 
+        - self.df = self.df.loc[1:self.from_epoch, :] ->  
+        - self.df = self.df.sort_index().loc[1:self.from_epoch, :]
+
 - 0.24.5.2 update torch, ipython -> try import
 - 0.24.5.0 update plots loc 2 -> 4
 - 0.24.4.3 initial
