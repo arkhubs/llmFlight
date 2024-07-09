@@ -1,5 +1,6 @@
 streamlit
 streamlit-modal
+jupyterlab
 ipykernel
 joblib
 lion-pytorch

@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(__file__))
 from emotion_Dou import main
 
 class Model():
-    def __init__(self, pkl='../specialized_models\emotion_Dou\emotion_Dou_202406051604.pkl'):
+    def __init__(self, pkl='../specialized_models/emotion_Dou/emotion_Dou_202406051604.pkl'):
 
         # 加载模型参数
         with open(pkl, 'rb') as f:

@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(__file__))
 from words_richness import main
 
 class Model():
-    def __init__(self, pkl='../specialized_models\words_richness\words_richness_202406051735.pkl'):
+    def __init__(self, pkl='../specialized_models/words_richness/words_richness_202406051735.pkl'):
 
         # 加载模型参数
         with open(pkl, 'rb') as f:
