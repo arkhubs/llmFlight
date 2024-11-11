@@ -24,6 +24,8 @@ import jieba.analyse
 os.chdir(os.path.dirname(__file__))
 sys.path.append(os.path.join(os.getcwd(), '../'))
 from settings import *
+from Scripts.multi_language.languages import used_content as language
+
 from llm_models.gpt_3_5_turbo_0125 import get_chat_response
 supported_models = [model for model in os.listdir('../main_models') if os.path.isdir(os.path.join('../main_models', model))]
 specialized_models = [(model_name, importlib.import_module(f"specialized_models.{model_name}.inference").Model()) for model_name in [
@@ -76,15 +78,8 @@ def split_text_into_segments(text, tol=200, reg=r'[\n]'):
 def generate_question(text, num_topics):
 
     stopwords = {
-        '的', '了', '和', '是', '在', '也', '有', '就', '不', '都', '而', '及', '与', '或', '一个', '中', '这', '以及', '一个',
-        '我', '你', '他', '她', '它', '我们', '你们', '他们', '她们', '它们', '其', '将', '要', '已经', '还', '还要', '再',
-        '没有', '不是', '非常', '特别', '很', '特别', '太', '然后', '但是', '所以', '如果', '因为', '因为而', '所以才', '由于', '因此', 
-        '就', '而且', '然而', '并且', '就是', '即', '又', '这', '那', '这些', '那些', '时候', '当时', '已', '我', '你', '他',
-        '她', '它', '的', '一个', '和', '而且', '并', '与', '来', '在', '到', '也', '有', '自己', '我们', '你们', '他们',
-        '她们', '它们', '该', '以及', '但', '并', '又', '同', '接着', '等', '可是', '而', '于是', '而是', '并且', '以及', 
-        '还', '还是', '仍然', '还是', '甚至', '的', '了', '就', '都', '而', '和', '不', '这', '也', '一', '来', '就', '不',
-        '中', '为', '在', '可', '却', '与', '于', '他', '她', '它', '能', '所', '个', '人', '这', '那', '也', '而', '但', 
-        '把', '却', '我', '你', '他', '她', '它', '我们', '你们', '他们', '她们', '它们', '这', '那', '这些', '那些'
+    "的", "了", "和", "是", "在", "也", "有", "就", "不", "都", "而", "及", "与", "或", "一个", "中", "这", "以及", "我", "你", "他", "她", "它", "我们", "你们", "他们", "她们", "它们", "其", "将", "要", "已经", "还", "还要", "再", "没有", "不是", "非常", "特别", "很", "太", "然后", "但是", "所以", "如果", "因为", "因为而", "所以才", "由于", "因此", "就", "而且", "然而", "并且", "就是", "即", "又", "那", "这些", "那些", "时候", "当时", "已", "自己", "该", "但", "并", "又", "同", "接着", "等", "可是", "于是", "而是", "还", "还是", "仍然", "甚至", "一", "来", "为", "可", "却", "于", "能", "所", "个", "人", "把", "到", "也", "把", "能", "所", "个", "人", "这", "那", "这些", "那些",
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "could", "did", "do", "does", "doing", "down", "during", "each", "few", "for", "from", "further", "had", "has", "have", "having", "he", "he'd", "he'll", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "it", "it's", "its", "itself", "let's", "me", "more", "most", "my", "myself", "nor", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "she", "she'd", "she'll", "should", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "we'd", "we'll", "we're", "we've", "were", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "would", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves"
     }
 
     kw = jieba.analyse.extract_tags(text, topK=num_topics)
@@ -95,7 +90,7 @@ def generate_question(text, num_topics):
 
     # 构建新的问题文本
     # new_question = f"请根据关键词{kw}和以{start_sentences}为开头的进行写作。"
-    new_question = f"请根据关键词{kw}进行写作。"
+    new_question = Template(language['new_question']).substitute(kw=kw)
 
     return new_question
 
@@ -105,12 +100,12 @@ def delete_session(id):
         del st.session_state.history[id]
     # 弹出确认对话框
     session = st.session_state.history[id]
-    msg = Modal(title="#### 删除会话", key="delete", max_width=500).container()
+    msg = Modal(title=language['#delete_session'], key="delete", max_width=500).container()
     with msg:
-        st.markdown(f"确认删除该用例？ \n{session['name']}")
+        st.markdown(f"{language['confirm_delete_session']} \n{session['name']}")
         b1, b2 = st.columns(spec=[1, 6])
-        b1.button("确认", on_click=delete) # 使用onlick才会调用成功并成功刷新，不能用if
-        b2.button("取消")
+        b1.button(language['confirm'], on_click=delete) # 使用onlick才会调用成功并成功刷新，不能用if
+        b2.button(language['cancel'])
 
 ## 重命名会话
 def rename_session(id):
@@ -119,16 +114,16 @@ def rename_session(id):
     # 弹出确认对话框
     def rename():
         st.session_state.text = st.session_state['rename-text'] # 读取自动保存的输入文本，目前只能采用此策略读到文本
-        msg = Modal(title="#### 确认重命名", key="confirm-rename", max_width=500).container()
+        msg = Modal(title=language['#confirm_rename'], key="confirm-rename", max_width=500).container()
         with msg:
-            st.markdown(f"确认重命名  \n`{oldname}`  \n为：  \n`{st.session_state['text']}`？")
+            st.markdown(Template(language['confirm_rename_session']).substitute(oldname=oldname, newname=st.session_state["text"]))
             b1, b2 = st.columns(spec=[1, 6])
-            b1.button("确认", on_click=tru_rename)
-            b2.button("取消")
+            b1.button(language['confirm'], on_click=tru_rename)
+            b2.button(language['cancel'])
     # 弹出输入对话框
     session = st.session_state.history[id]
     oldname = session['name']
-    msg = Modal(title="#### 重命名会话", key="rename", max_width=500).container()
+    msg = Modal(title=language['#rename_session'], key="rename", max_width=500).container()
     with msg:
         st.text_input(label=" ", key="rename-text", value=session['name'], on_change=rename) # 当按下回车会触发on_change
 
@@ -151,9 +146,9 @@ def new_session():
             ]
         })
     # 弹出输入对话框
-    msg = Modal(title="#### 新建会话", key="new", max_width=500).container()
+    msg = Modal(title=language['#create_session'], key="new", max_width=500).container()
     with msg:
-        st.text_input(label=" ", key="new-text", value="会话 ", on_change=create)
+        st.text_input(label=" ", key="new-text", value=language['my_session'], on_change=create)
 
 ## 通过onchange触发，缓存问题文本
 def save_question_text(data, key):
@@ -166,30 +161,13 @@ def save_answer_text(data, key):
 class Reporter():
     def __init__(self):
         self.local_templates = {
-            'default': Template("""
-                <div style="background-color: ${color}; padding: 10px; margin: 10px 0;">
-                    <strong>${num}. 段落预测概率: ${prob}%</strong>
-                    <p>${text}</p>
-                </div>
-            """)}
+            'default': language['default_local_templates']}
         
         self.prompt_templates = {
-            'default': Template("""
-                ${num}. 段落预测概率: ${prob}%
-            """)}
+            'default': language['default_prompt_templates']}
         
         self.global_templates = {
-            'default': Template("""
-                ### 主模型综合预测概率  
-                    ${main}；
-                ### 特化模型预测概率：  
-                - 词语丰富度模型：
-                    ${words_richness}；
-                - 句子长度模型：
-                    ${sentences_length}；
-                - 情感强度模型：
-                    ${emotion_Dou}；                
-            """)}
+            'default': language['default_global_templates']}
 
     # 根据概率计算颜色的深度
     def color_gradient(self, prob):
@@ -256,7 +234,7 @@ if 'reporter' not in globals():
 st.set_page_config(page_title="llmFlight", page_icon=' ', layout='wide')
 
 ## 侧边栏
-st.sidebar.header("历史会话")
+st.sidebar.header(language['session_history'])
 
 for session in st.session_state.history:
     c1, c2, c3 = st.sidebar.columns(spec=[9, 2, 2])
@@ -266,7 +244,7 @@ for session in st.session_state.history:
     c2.button("🗑️", key=f"{session['id']}-delete", on_click=delete_session, args=(session['id'],))
     c3.button("🖉", key=f"{session['id']}-rename", on_click=rename_session, args=(session['id'],))
 
-st.sidebar.button("＋ 新建会话", key="new_session", type="primary", on_click=new_session)
+st.sidebar.button(language['+new_session'], key="new_session", type="primary", on_click=new_session)
 
 ## 根据current加载主界面
 if st.session_state.current:
@@ -300,13 +278,14 @@ if st.session_state.current:
             st.write(f"The text has about `{sum(2 if ord(char) > 127 else 1 for char in answer_text)}` tokens.")
 
             # 补全问题文本
-            if st.button("不能提供问题文本？点击为你生成一个问题！", key=f"generate-question-{id}-{tabid}"):
+            if st.button(language['generate_question'], key=f"generate-question-{id}-{tabid}"):
                 question_text = generate_question(answer_text, 10)
                 st.markdown(f"`{question_text}`")
                 data['question_text'] = question_text
+                st.button(language['input'])
 
             # 预测
-            if st.button("检测！", key=f"infer-{id}-{tabid}"):
+            if st.button(language['detection'], key=f"infer-{id}-{tabid}"):
                 question_embedding = inference.get_embeddings([question_text])[0]
                 answer_seg = [answer_text] + split_text_into_segments(answer_text)
                 answer_embeddings = inference.get_embeddings(answer_seg)
@@ -315,19 +294,10 @@ if st.session_state.current:
 
                 global_info = reporter.global_render('default', specialized_probs)
                 st.markdown(global_info)
-                st.markdown("### Agent总结：")
-                prompt = """
-                    以下是AI文本检测报告，但不够直观，请分别帮我汇总一个简洁的结论和一个具体分析。以综合概率为主，如果综合概率低，要点出不太可能由AI生成；如果综合概率高，请进行归因。以这样的格式：
-                    【简洁结论】\n
-                    ……\n
-                    【具体分析】\n
-                    词语丰富度模型预测文本为AI生成的概率……，表明……
-                    句子长度模型和情感强度模型的预测概率分别为…………
-                    分段预测中，……的预测概率……，分别为……，提示……\n
-                    综合来看，……
-                """ + global_info + reporter.local_prompt('default', probs[1:])
+                st.markdown(language['#agent_summary'])
+                prompt = language['prompt_agent_summary'] + global_info + reporter.local_prompt('default', probs[1:])
                 st.write(get_chat_response(prompt)[0])
-                st.markdown("### 分段预测概率：")
+                st.markdown(language['#predict each'])
                 st.html(reporter.local_render('default', answer_seg[1:], probs[1:]))
                 
 
